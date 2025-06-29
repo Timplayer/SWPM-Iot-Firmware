@@ -1,13 +1,69 @@
-#include <Arduino.h>
 
+#include "config.hpp"            // your constants
+#include "DisplayManager.hpp"    // wrapped OLED driver
+#include "ProvisioningManager.hpp"
+#include "mDNS.hpp"           // mDNS/DNS-SD
+#include "Sensor.hpp"
+#include "Webserver.hpp"      // tiny HTTP server
+#include <WiFi.h>            // Wi-Fi client
+DisplayManager      display;
 
-void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
+MDNSManager mdns("sensor",          // service type
+                 80,                // port
+                 "Test1234",      // e.g. "WX-AQ1"
+                 "1.0.3",        // e.g. "1.0.3"
+                 "abcd1234");    // e.g. "abcd1234"
+WebServerManager webserver(80); // HTTP server on port 80
+ProvisioningManager prov(display, mdns, webserver);
+RadarSensor sensor(Serial2, Serial, &display);
+
+void setup()
+{
+  Serial.begin(115200);
+  display.begin();
+  prov.begin();
+  sensor.begin();
+
+  webserver.setSensorCallback([&]() {
+    // Return a JSON string with sensor data
+    String json = "{\"is_person\":";
+    json += sensor.getIsPerson() ? "true" : "false";
+    json += "}";
+    return json;
+  });
+
+  char fw[32];
+  if (sensor.queryFirmwareVersion(fw, sizeof(fw)))
+    Serial.printf("FW : %s\n", fw);
+
+    static const uint8_t CMD_REPORT_MODE[] PROGMEM =
+     { 0xFD,0xFC,0xFB,0xFA,  0x08,0x00,  0x12,0x00, 0x00,0x00, 0x04,0x00,0x00,0x00,  0x04,0x03,0x02,0x01 };
+
+  Serial2.write(CMD_REPORT_MODE, sizeof(CMD_REPORT_MODE));
 }
 
-void loop() {
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(1000);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(1000);
+void loop()
+{
+
+      static uint32_t last = 0;
+      if (millis() - last > 1000) {
+          last = millis();
+
+          if(webserver.reset){
+            Serial.println("Reset!");
+            webserver.stop();
+            WiFi.disconnect(false, true);
+            wifi_prov_mgr_reset_provisioning();
+            mdns.stop();
+            ESP.restart();
+            return;
+          }
+
+          if (WiFi.status() == WL_CONNECTED) {
+            sensor.loop();
+            Serial.println("Wi-Fi OK – running main app");
+          }else{
+            Serial.println("Wi-Fi not connected yet");
+          }
+      }
 }
