@@ -1,6 +1,10 @@
 #include "config.hpp"
 #include "DisplayManager.hpp"
 
+constexpr uint8_t I2C_ADDR = 0x3C;           // 0x3C or 0x3D
+constexpr int     SDA_PIN  = 21;
+constexpr int     SCL_PIN  = 22;
+
 DisplayManager::DisplayManager() :
   oled_(I2C_ADDR, SDA_PIN, SCL_PIN),
   qrcode_(&oled_) {}

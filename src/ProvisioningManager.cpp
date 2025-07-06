@@ -7,8 +7,8 @@
 
 ProvisioningManager* ProvisioningManager::self_ = nullptr;
 
-ProvisioningManager::ProvisioningManager(DisplayManager& display, MDNSManager& mdns, WebServerManager& webserver)
-  : display_(display), mdns_(mdns), webserver_(webserver) { self_ = this; }
+ProvisioningManager::ProvisioningManager(DisplayManager& display, MDNSManager& mdns, WebServerManager& webserver, const Config& config)
+  : display_(display), mdns_(mdns), webserver_(webserver), config_(config) { self_ = this; }
 
 void ProvisioningManager::begin() {
 
@@ -30,10 +30,11 @@ void ProvisioningManager::begin() {
   WiFiProv.beginProvision(WIFI_PROV_SCHEME_BLE,
                             WIFI_PROV_SCHEME_HANDLER_NONE,
                             WIFI_PROV_SECURITY_1,
-                            POP, SERVICE_NAME, /*softAP key*/ nullptr,
+                            config_.pop.c_str(), config_.serviceName.c_str(), /*softAP key*/ nullptr,
                             nullptr,
-                            RESET_PROV);
-  WiFiProv.printQR(SERVICE_NAME, POP, "ble");
+                            config_.resetProv);
+
+  WiFiProv.printQR(config_.serviceName.c_str(), config_.pop.c_str(), "ble");
 
   display_.showStatus("Starting BLE provisioning...");
   drawQR();
@@ -44,7 +45,7 @@ void ProvisioningManager::drawQR() {
   static char payload[120];
   snprintf(payload, sizeof(payload),
           "{\"ver\":\"v1\",\"name\":\"%s\",\"pop\":\"%s\",\"transport\":\"ble\"}",
-          SERVICE_NAME, POP);
+          config_.serviceName.c_str(), config_.pop.c_str());
   display_.showQR(payload);
 }
 
@@ -67,8 +68,14 @@ void ProvisioningManager::onWiFiEvent(arduino_event_t* event)
       bool authError =
             disc->reason == WIFI_REASON_AUTH_EXPIRE          || 
             disc->reason == WIFI_REASON_AUTH_FAIL            ||  
-            disc->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT ||
-            disc->reason == WIFI_REASON_NO_AP_FOUND;
+            disc->reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT;
+
+      if(disc->reason == WIFI_REASON_NO_AP_FOUND)
+      {
+        wifi_prov_mgr_reset_provisioning();
+        wifi_config_t cfg = {};
+        esp_wifi_set_config(WIFI_IF_STA, &cfg);
+      }
 
       if (authError) {
         //WiFi.disconnect(false, true);

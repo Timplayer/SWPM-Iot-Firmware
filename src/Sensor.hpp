@@ -2,6 +2,8 @@
 #include <Arduino.h>
 #include "DisplayManager.hpp"
 
+class MqttManager; // Forward declaration
+
 /**
  *  -------------------------------------------------------------
  *  RadarSensor – high-level helper for an XY-MOTION radar module
@@ -58,6 +60,10 @@ public:
   {
     return is_person;
   }
+  void setMqttManager(MqttManager* mqttManager) {
+    _mqttManager = mqttManager;
+  }
+
 private:
   /* fixed tokens */
   static const uint8_t DET_HDR[4];
@@ -92,6 +98,7 @@ private:
   HardwareSerial& _radar;
   Stream&         _dbg;
   DisplayManager* _display;
+  MqttManager*    _mqttManager = nullptr;
 
   bool is_person = false;
 };

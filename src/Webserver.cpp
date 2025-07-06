@@ -27,6 +27,30 @@ void WebServerManager::begin()
         reset = true;
     });
 
+    server_.on("/mqtt", HTTP_POST, [this](AsyncWebServerRequest *request){
+        if (request->hasParam("mqttServer", true) && request->hasParam("mqttPort", true) && request->hasParam("mqttTopic", true)) {
+            String mqttServer = request->getParam("mqttServer", true)->value();
+            int mqttPort = request->getParam("mqttPort", true)->value().toInt();
+            String mqttTopic = request->getParam("mqttTopic", true)->value();
+            String mqttUser = "tim";
+            String mqttPass = "tim";
+            if (request->hasParam("mqttUser", true)) {
+                mqttUser = request->getParam("mqttUser", true)->value();
+            }
+            if (request->hasParam("mqttPass", true)) {
+                mqttPass = request->getParam("mqttPass", true)->value();
+            }
+            if (mqttConfigCb_) {
+                mqttConfigCb_(mqttServer, mqttPort, mqttTopic, mqttUser, mqttPass);
+                request->send(200, "text/plain", "MQTT configuration updated.");
+            } else {
+                request->send(500, "text/plain", "MQTT configuration callback not set.");
+            }
+        } else {
+            request->send(400, "text/plain", "Missing MQTT parameters (mqttServer, mqttPort, mqttTopic).");
+        }
+    });
+
     server_.begin();
 }
 

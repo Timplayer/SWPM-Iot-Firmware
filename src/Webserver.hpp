@@ -22,10 +22,14 @@ public:
     void setSensorCallback(std::function<String(void)> fn)
         { sensorCb_ = std::move(fn); }
 
+    void setMqttConfigCallback(std::function<void(String, int, String, String, String)> fn)
+        { mqttConfigCb_ = std::move(fn); }
+
     bool reset = false;
 private:
     AsyncWebServer           server_;
     std::function<String()>  sensorCb_;
+    std::function<void(String, int, String, String, String)> mqttConfigCb_;
     bool                     running_ = false;
 
 };

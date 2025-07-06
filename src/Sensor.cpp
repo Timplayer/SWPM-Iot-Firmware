@@ -1,4 +1,5 @@
 #include "Sensor.hpp"
+#include "MqttManager.hpp"
 
 const uint8_t RadarSensor::DET_HDR[4]  = { 0xF4, 0xF3, 0xF2, 0xF1 };
 const uint8_t RadarSensor::DET_TAIL[4] = { 0xF8, 0xF7, 0xF6, 0xF5 };
@@ -222,6 +223,10 @@ void RadarSensor::parseStream()
 
 void RadarSensor::handleFrame(const Frame& rf)
 {
+  if (_mqttManager) {
+    _mqttManager->publishSensorData(rf);
+  }
+
   _dbg.print(F("Target: "));
   _dbg.print(rf.targetPresent ? F("YES") : F("no "));
   _dbg.print(F("  Dist: "));

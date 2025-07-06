@@ -7,7 +7,7 @@
 
 class ProvisioningManager {
 public:
-  explicit ProvisioningManager(DisplayManager& display,MDNSManager& mdns, WebServerManager& webserver);
+  explicit ProvisioningManager(DisplayManager& display,MDNSManager& mdns, WebServerManager& webserver, const Config& config);
 
   void begin();               // start BLE provisioning (if needed)
 private:
@@ -19,5 +19,5 @@ private:
   DisplayManager& display_;
   MDNSManager& mdns_;    
   WebServerManager& webserver_; // optional, not used here
-
+  const Config& config_;
 };
