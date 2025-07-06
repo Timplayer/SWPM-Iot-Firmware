@@ -1,4 +1,4 @@
-#include "config.hpp"
+#include "Config.hpp"
 #include "ProvisioningManager.hpp"
 #include "DisplayManager.hpp"
 #include <WiFi.h>
