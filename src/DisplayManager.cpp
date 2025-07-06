@@ -1,4 +1,4 @@
-#include "config.hpp"
+#include "Config.hpp"
 #include "DisplayManager.hpp"
 
 constexpr uint8_t I2C_ADDR = 0x3C;           // 0x3C or 0x3D
