@@ -1,5 +1,5 @@
 
-#include "config.hpp"            // your constants
+#include "Config.hpp"            // your constants
 #include "DisplayManager.hpp"    // wrapped OLED driver
 #include "ProvisioningManager.hpp"
 #include "mDNS.hpp"           // mDNS/DNS-SD
